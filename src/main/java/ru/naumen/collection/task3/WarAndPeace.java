@@ -22,10 +22,17 @@ public class WarAndPeace
             "Лев_Толстой_Война_и_мир_Том_1,_2,_3,_4_(UTF-8).txt");
 
     /**
-     * Общая сложность алгоритма - O(m) + O(n (log n)) + O(n) + O(10)
-     * Можно упростить до O(m + n(log n))
-     * m - кол-во слов в файле
-     * n - кол-во уникальных слов
+     * Общая сложность алгоритма - O(m) + O(n log n)
+     * m - количество слов в файле
+     * n - количество уникальных слов
+     *
+     * Чтение и обработка файла с подсчетом слов: O(m).
+     * Поиск топ-10 и последних 10 слов с помощью PriorityQueue:
+     * Вставка в очередь O(log 10) = O(1),
+     * Перебор n уникальных слов с операциями вставки и удаления - O(n log 10) = O(n).
+     * Вывод: O(10) + O(10).
+     *
+     * В результате можно упростить до O(m + n log n).
      *
      * @param args
      */
@@ -45,21 +52,31 @@ public class WarAndPeace
                     result.merge(lower, 1L, Long::sum);
                 });
 
-        // Сортировка элементов отображения. Возьмём в качестве
-        // сложности сортировки n(log n). Получается, сложность операции - O(n(log n))
-        List<Map.Entry<String, Long>> sorted = result.entrySet()
-                .stream()
-                .sorted(Map.Entry.<String, Long>comparingByValue().reversed()).toList();
+        // Используем PriorityQueue для нахождения 10 наиболее частых и редких слов, здесь слова сами будут
+        // выстраиваться с учётом их количества вхождений - сортировка всех слов будет не нужна.
+        PriorityQueue<Map.Entry<String, Long>> topWords = new PriorityQueue<>(Map.Entry.comparingByValue());
+        PriorityQueue<Map.Entry<String, Long>> leastWords = new PriorityQueue<>((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()));
 
-        // Перебор первых 10 элементов. Получается, сложность операции - O(10)
+        // Перебор всех уникальных слов для нахождения первых 10 и последних 10, сложность - O(n log 10)
+        result.entrySet().forEach(entry -> {
+            topWords.offer(entry);
+            if (topWords.size() > 10) {
+                topWords.poll();
+            }
+
+            leastWords.offer(entry);
+            if (leastWords.size() > 10) {
+                leastWords.poll();
+            }
+        });
+
+        // Перебор и вывод элементов. Сложность обеих операций - O(10)
         System.out.println("TOP 10 наиболее используемых слов:");
-        sorted.stream().limit(10).forEach(entry ->
+        topWords.stream().sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue())).forEach(entry ->
                 System.out.println(entry.getKey() + " - " + entry.getValue()));
 
-        System.out.println("\nLAST 10 наименее используемых:");
-
-        // Пропуск всех слов кроме 10 последних. Получается, сложность операции в худшем случае - O(n)
-        sorted.stream().skip(Math.max(0, sorted.size() - 10)).forEach(entry ->
+        System.out.println("\nLAST 10 наименее используемых слов:");
+        leastWords.stream().sorted(Comparator.comparingLong(Map.Entry::getValue)).forEach(entry ->
                 System.out.println(entry.getKey() + " - " + entry.getValue()));
     }
 }

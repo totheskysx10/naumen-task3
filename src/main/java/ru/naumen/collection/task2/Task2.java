@@ -32,22 +32,19 @@ public class Task2
 {
 
     /**
-     * Возвращает дубликаты пользователей, которые есть в обеих коллекциях
+     * Возвращает дубликаты пользователей, которые есть в обеих коллекциях.
      *
-     * Сложность: O(n + m + k), сформирована из O(n) - создание первой коллекциии,
-     * O(m) - создание второй коллекции, O(m+n) - retainAll и O(k) - преобразование результата в список.
-     * Получается O(2n + 2m + k), но упрощено до O(n + m + k).
+     * Сложность: O(n + m + k)
+     * O(m) - создание второй коллекции (множества), O(n) - итерация по первой коллекции с проверкой наличия в множестве,
+     * O(k) - преобразование результата в список.
      */
     public static List<User> findDuplicates(Collection<User> collA, Collection<User> collB) {
-        // LinkedHashSet позволит быстро итерироваться
-        // по элементам благодаря связанности (это нужно для retainAll).
-        HashSet<User> setA = new LinkedHashSet<>(collA);
+        // Создаем HashSet для collB для эффективной работы contains O(1).
+        Set<User> setB = new HashSet<>(collB);
 
-        // Сложность операции contains (это нужно для retainAll) в HashSet - O(1), благодаря хешированию.
-        HashSet<User> setB = new HashSet<>(collB);
-
-        setA.retainAll(setB);
-
-        return setA.stream().toList();
+        // Итерируемся по collA и оставляем только те элементы, которые есть в setB.
+        return collA.stream()
+                .filter(setB::contains)  // O(1) для каждой проверки contains
+                .toList();               // Преобразование в список O(k), k - кол-во дубликатов
     }
 }
